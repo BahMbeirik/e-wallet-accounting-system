@@ -63,11 +63,11 @@ export default function DocumentationPage() {
     
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto space-y-6 p-2">
         {/* En-tête */}
         <div className="bg-white rounded-2xl shadow-xl p-8  mb-8 border border-gray-200">
-          <div className="flex items-center ">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 rounded-xl mr-6">
+          <div className="md:flex md:items-center ">
+            <div className="hidden md:block bg-gradient-to-r from-blue-600 to-indigo-600 p-4 rounded-xl mr-6">
               <BookOpen className="h-10 w-10 text-white" />
             </div>
             <div>
@@ -81,7 +81,7 @@ export default function DocumentationPage() {
           </div>
         </div>
 
-        <div className="flex gap-8">
+        <div className="md:flex md:gap-8">
           {/* Navigation latérale */}
           <div className="w-80 flex-shrink-0">
             <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200 sticky top-8">
@@ -298,12 +298,12 @@ export default function DocumentationPage() {
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                    <div className="bg-blue-50 rounded-xl w-72 md:w-full p-4 border border-blue-200">
                       <div className="flex items-center mb-3">
                         <User className="h-5 w-5 text-blue-600 mr-2" />
                         <h3 className="font-semibold text-blue-800">Données de Compte</h3>
                       </div>
-                      <CodeBlock
+                      <CodeBlock 
                         code={`{
                           "type": "account",
                           "data": {
@@ -322,12 +322,12 @@ export default function DocumentationPage() {
                       />
                     </div>
 
-                    <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
+                    <div className="bg-purple-50 rounded-xl w-72 md:w-full p-4 border border-purple-200">
                       <div className="flex items-center mb-3">
                         <CreditCard className="h-5 w-5 text-purple-600 mr-2" />
                         <h3 className="font-semibold text-purple-800">Données de Transaction</h3>
                       </div>
-                      <CodeBlock
+                      <CodeBlock 
                         code={`{
                           "type": "transaction",
                           "data": {

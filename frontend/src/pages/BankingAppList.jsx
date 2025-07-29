@@ -92,12 +92,12 @@ const BankingAppList = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-2">
+      <div className="max-w-7xl mx-auto space-y-6 p-1 md:p-2">
         {/* En-tête */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-200">
-          <div className="flex items-center mb-6">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-xl mr-4">
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-200">
+          <div className="md:flex md:items-center mb-6">
+            <div className="hidden md:block bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-xl mr-4">
               <Shield className="h-8 w-8 text-white" />
             </div>
             <div>
@@ -112,13 +112,13 @@ const BankingAppList = () => {
               <Plus className="h-5 w-5 mr-2 text-blue-600" />
               Créer une nouvelle application
             </h3>
-            <div className="flex gap-4">
+            <div className="md:flex gap-4 ">
               <input
                 type="text"
                 value={newAppName}
                 onChange={(e) => setNewAppName(e.target.value)}
                 placeholder="Nom de l'application"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                className="mb-2 md:mb-0 flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                 onKeyPress={(e) => e.key === 'Enter' && createApp()}
               />
               <button

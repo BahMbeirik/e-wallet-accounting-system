@@ -199,6 +199,11 @@ const Navbar = () => {
                             </li>
                             )}
                             <li >
+                              <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/banking-apps">
+                                <span className="ms-3 text-gray-700 ">Applications</span>
+                              </NavLink>
+                            </li>
+                            <li >
                               <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/accounts">
                                 <span className="ms-3 text-gray-700 ">Comptes</span>
                               </NavLink>
