@@ -1,11 +1,26 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import axiosInstance from '../api';
-import { CiExport } from "react-icons/ci";
-import { PDFExport } from '@progress/kendo-react-pdf';
 import {formatCurrency} from '../utils/formatters';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useNavigate } from 'react-router-dom';
+import {  CashIcon } from '@heroicons/react/outline';
+import { toast } from 'react-toastify';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { 
+  TrendingUp, 
+  Activity,
+  DollarSign, 
+  CreditCard, 
+  Download,
+  ChevronDown,
+  Users,
+  BarChart3,
+  Calendar,
+  ArrowUpRight,
+  ArrowDownRight
+} from 'lucide-react';
 
 const FinancialReport = () => {
   const [report, setReport] = useState(null);
@@ -13,8 +28,7 @@ const FinancialReport = () => {
   const [error, setError] = useState(null);
   const { currency, convertCurrency, ...context  } = useCurrency();
   const navigate = useNavigate();
-  
-  const pdfExportComponent = useRef(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -38,18 +52,162 @@ const FinancialReport = () => {
     fetchReport();
   }, []);
 
-  const handleExport = () => {
-    if (pdfExportComponent.current) {
-      pdfExportComponent.current.save();
-    }
-  };
+  
+
+  // Fonction pour exporter en CSV
+    const exportToCSV = () => {
+        if (!report) return;
+
+        let csvContent = 'data:text/csv;charset=utf-8,';
+        const date = new Date().toISOString().slice(0, 10);
+
+        // En-tête
+        csvContent += `Rapport Financier,Généré le,${date}\n\n`;
+
+        // Section Prêts
+        csvContent += 'Section: Prêts\n';
+        csvContent += 'Compte,Montant,Intérêt,Taux (%)\n';
+        report.loans.loans.forEach((loan) => {
+          csvContent += `${loan.account},${loan.amount},${loan.interest},${loan.interest_rate}\n`;
+        });
+        csvContent += '\n';
+
+        // Section Dépôts
+        csvContent += 'Section: Dépôts\n';
+        csvContent += 'Compte,Montant,Intérêt,Taux (%)\n';
+        report.deposits.deposits.forEach((deposit) => {
+          csvContent += `${deposit.account},${deposit.amount},${deposit.interest},${deposit.interest_rate}\n`;
+        });
+        csvContent += '\n';
+
+        // Répartition par Type de Client
+        csvContent += 'Répartition par Type de Client\n';
+        csvContent += 'Type de Client,Montant Total,Pourcentage\n';
+        report.total_balances_by_type.forEach((item) => {
+          const percentage = ((item.total_balance / report.total_balances) * 100).toFixed(1) + '%';
+          csvContent += `${item.client_type},${item.total_balance},${percentage}\n`;
+        });
+        csvContent += '\n';
+
+        // Répartition par Type de Client détaillée
+        csvContent += 'Répartition par Type de Client détaillée\n';
+        csvContent += 'Type de Client,Compte,Solde,Pourcentage\n';
+        report.repartition_by_type?.forEach((group) => {
+          group.accounts?.forEach((acc) => {
+            const percentage = ((acc.balance / report.total_balances) * 100).toFixed(1) + '%';
+            csvContent += `${group.client_type},${acc.account},${acc.balance},${percentage}\n`;
+          });
+        });
+        csvContent += '\n';
+
+
+
+        // Résumé
+        csvContent += 'Résumé\n';
+        csvContent += `Solde Total,${report.total_balances}\n`;
+        csvContent += `Total Prêts,${report.loans.total_loan_amount}\n`;
+        csvContent += `Intérêts Prêts,${report.loans.total_interest}\n`;
+        csvContent += `Total Dépôts,${report.deposits.total_deposit_amount}\n`;
+        csvContent += `Intérêts Dépôts,${report.deposits.total_interestDeposit}\n`;
+
+        // Encodage & téléchargement
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `rapport_financier_${date}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+
+        toast.success('Export CSV réussi !');
+      };
+
+  
+    // Fonction pour exporter en PDF (utilisant jsPDF et autoTable)
+    const exportToPDF = () => {
+        if (!report) return;
+
+        const doc = new jsPDF();
+        const dateStr = new Date().toLocaleDateString('fr-FR');
+
+        doc.setFontSize(16);
+        doc.text("Rapport Financier Général", 14, 15);
+        doc.setFontSize(10);
+        doc.text(`Date: ${dateStr}`, 14, 22);
+
+        // Loans Table
+        autoTable(doc, {
+          startY: 30,
+          head: [['Compte', 'Montant', 'Intérêt', 'Taux %']],
+          body: report.loans.loans.map((loan) => [
+            loan.account,
+            loan.amount.toFixed(2),
+            loan.interest.toFixed(2),
+            `${loan.interest_rate}%`,
+          ]),
+          theme: 'striped',
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [139, 92, 246] }, // violet
+          margin: { top: 10 },
+        });
+
+        // Deposits Table
+        autoTable(doc, {
+          startY: doc.lastAutoTable.finalY + 10,
+          head: [['Compte', 'Montant', 'Intérêt', 'Taux %']],
+          body: report.deposits.deposits.map((deposit) => [
+            deposit.account,
+            deposit.amount.toFixed(2),
+            deposit.interest.toFixed(2),
+            `${deposit.interest_rate}%`,
+          ]),
+          theme: 'striped',
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [16, 185, 129] }, // green
+        });
+
+        // Répartition par Type de Client
+        autoTable(doc, {
+          startY: doc.lastAutoTable.finalY + 10,
+          head: [['Type de Client', 'Montant Total', 'Pourcentage']],
+          body: report.total_balances_by_type.map((item) => {
+            const percentage = ((item.total_balance / report.total_balances) * 100).toFixed(1) + '%';
+            return [
+              item.client_type,
+              item.total_balance.toFixed(2),
+              percentage,
+            ];
+          }),
+          theme: 'striped',
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [59, 130, 246] }, // blue
+        });
+
+
+        // Résumé
+        const totalY = doc.lastAutoTable.finalY + 20;
+        doc.setFontSize(12);
+        doc.text('Résumé:', 14, totalY);
+
+        doc.setFontSize(10);
+        doc.text(`• Solde Total: ${report.total_balances.toFixed(2)}`, 14, totalY + 8);
+        doc.text(`• Total Prêts: ${report.loans.total_loan_amount.toFixed(2)}`, 14, totalY + 14);
+        doc.text(`• Intérêts Prêts: ${report.loans.total_interest.toFixed(2)}`, 14, totalY + 20);
+        doc.text(`• Total Dépôts: ${report.deposits.total_deposit_amount.toFixed(2)}`, 14, totalY + 26);
+        doc.text(`• Intérêts Dépôts: ${report.deposits.total_interestDeposit.toFixed(2)}`, 14, totalY + 32);
+
+        doc.save(`rapport_financier_${new Date().toISOString().slice(0, 10)}.pdf`);
+      
+      toast.success('Export PDF réussi !');
+    };
 
   if (loading) return (
     <div className="flex justify-center items-center h-64">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
     </div>
   );
-  
+
   if (error) return (
     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
       <span className="font-bold">Error: </span>
@@ -67,145 +225,286 @@ const FinancialReport = () => {
     );
   }
 
-  return (
-    <div className="p-2 max-w-6xl mx-auto bg-gray-50">
-      <div className="flex justify-between items-center p-2  ">
-        <h1 className="text-2xl font-bold">Rapports Financiers</h1>
-        <button 
-          onClick={handleExport}
-          className="flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-md shadow hover:bg-blue-50 transition duration-200"
-        >
-          <CiExport className="text-xl" />
-          <span>Exporter PDF</span>
-        </button>
-      </div>
-      <PDFExport paperSize="A3" margin="1cm" ref={pdfExportComponent} fileName="Financial_Report">
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          {/* Header */}
-          <div className="flex justify-between items-center p-2 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-            <h1 className="text-2xl font-bold">Rapport Financier</h1>
 
-          </div>
-
-          {/* Accounts Section */}
-          <section className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-              </svg>
-              Comptes
-            </h2>
-            
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gray-100 px-4 py-3 border-b border-gray-200">
-                <h3 className="font-semibold text-gray-700">Total des soldes par type de compte</h3>
-              </div>
-              
-              <ul className="divide-y divide-gray-200">
-                {report.total_balances_by_type.map((balance, index) => (
-                  <li key={index} className="px-4 py-3 flex justify-between items-center hover:bg-gray-50">
-                    <span className="font-medium text-gray-700">{balance.client_type}</span>
-                    <span className="text-gray-900">
-                      <span className="text-gray-500 mr-2">Solde total :</span>
-                      <span className="font-bold text-blue-600">{formatCurrency(balance.total_balance, currency, context)}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              
-              <div className="bg-gray-100 px-4 py-3 flex justify-between items-center font-semibold">
-                <span className="text-gray-800">Solde total de tous les comptes</span>
-                <span className="text-blue-600 text-lg">{formatCurrency(report.total_balances, currency, context)}</span>
-              </div>
+  const StatCard = ({ title, value, icon: Icon, color, trend, trendValue }) => (
+    <div className="bg-white rounded-xl shadow-lg p-3 border-l-4" style={{ borderColor: color }}>
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+          <p className="text-1xl font-bold text-gray-900 mb-1">{value}</p>
+          {trend && (
+            <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+              trend === 'up' 
+                ? 'bg-green-50 text-green-700' 
+                : 'bg-red-50 text-red-700'
+            }`}>
+              {trend === 'up' ? 
+                <ArrowUpRight className="w-4 h-4 mr-1" /> : 
+                <ArrowDownRight className="w-4 h-4 mr-1" />
+              }
+              <span>{trendValue}</span>
             </div>
-          </section>
-
-          {/* Transactions Section 
-          <section className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-              Transactions
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-green-100 px-4 py-3 border-b border-gray-200">
-                  <h3 className="font-semibold text-green-800">Crédits</h3>
-                </div>
-                <div className="p-4 flex justify-between items-center">
-                  <span className="font-medium text-gray-700">Total des crédits</span>
-                  <span className="font-bold text-green-600">{formatCurrency(report.transactions.total_credit, currency, context)}</span>
-                </div>
-              </div>
-              
-              
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-red-100 px-4 py-3 border-b border-gray-200">
-                  <h3 className="font-semibold text-red-800">Débits</h3>
-                </div>
-                <div className="p-4 flex justify-between items-center">
-                  <span className="font-medium text-gray-700">Total des débits</span>
-                  <span className="font-bold text-red-600">{formatCurrency(report.transactions.total_debit, currency, context)}</span>
-                </div>
-              </div>
-            </div>
-          </section>
-          */}
-          {/* Loans & Deposits Section */}
-          <section className="p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Prêts & Dépôts
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Loans */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-purple-100 px-4 py-3 border-b border-gray-200">
-                  <h3 className="font-semibold text-purple-800">Prêts</h3>
-                </div>
-                <div className="divide-y divide-gray-200">
-                  <div className="p-4 flex justify-between items-center">
-                    <span className="font-medium text-gray-700">Total des prêts</span>
-                    <span className="font-bold text-purple-600">{formatCurrency(report.loans.total_loan_amount, currency, context)}</span>
-                  </div>
-                  <div className="p-4 flex justify-between items-center">
-                    <span className="font-medium text-gray-700">Total des intérêts</span>
-                    <span className="font-bold text-purple-600">{formatCurrency(report.loans.total_interest, currency, context)}</span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Deposits */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-yellow-100 px-4 py-3 border-b border-gray-200">
-                  <h3 className="font-semibold text-yellow-800">Dépôts</h3>
-                </div>
-                <div className="divide-y divide-gray-200">
-                  <div className="p-4 flex justify-between items-center">
-                    <span className="font-medium text-gray-700">Total des dépôts</span>
-                    <span className="font-bold text-yellow-600">{formatCurrency(report.deposits.total_deposit_amount, currency, context)}</span>
-                  </div>
-                  <div className="p-4 flex justify-between items-center">
-                    <span className="font-medium text-gray-700">Total des intérêts</span>
-                    <span className="font-bold text-yellow-600">{formatCurrency(report.deposits.total_interestDeposit, currency, context)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-          
-          {/* Footer */}
-          <div className="text-center p-2 text-sm text-gray-500 border-t border-gray-200 bg-gray-50">
-            Généré le {new Date().toLocaleDateString()}
+          )}
+        </div>
+        <div className="flex-shrink-0">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: `${color}20` }}>
+            <Icon className="w-6 h-6" style={{ color }} />
           </div>
         </div>
-      </PDFExport>
+      </div>
+    </div>
+  );
+
+  const SectionCard = ({ title, children, icon: Icon, color }) => (
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-200" style={{ background: `linear-gradient(135deg, ${color}10, ${color}05)` }}>
+        <div className="flex items-center">
+          <Icon className="w-6 h-6 mr-3" style={{ color }} />
+          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+        </div>
+      </div>
+      <div className="p-6">
+        {children}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+          <div className="flex items-center mb-6 lg:mb-0">
+              <div className="w-16 h-16 bg-gray-200 rounded-3xl flex items-center justify-center mr-6">
+                <Activity className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold italic text-gray-700  tracking-wide uppercase mb-2">
+                  Rapport financier général
+                </h1>
+                <p className="text-sm text-gray-600">Vue d'ensemble de la performance financière</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center text-gray-500 bg-gray-100 px-4 py-2 rounded-2xl">
+                <Calendar className="w-4 h-4 mr-2" />
+                <span className="text-sm font-medium">{new Date().toLocaleDateString('fr-FR')}</span>
+              </div>
+              <div className="relative inline-block ml-1">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <Download className="h-5 w-5 mr-2" />
+                Exporter
+                <ChevronDown className={`h-4 w-4 ml-2 transform transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        exportToCSV();
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50 flex items-center"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export CSV
+                    </button>
+                    <button
+                      onClick={() => {
+                        exportToPDF();
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-indigo-600 hover:bg-blue-50 flex items-center"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export PDF
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            </div>
+        </div>
+        
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            title="Solde Total"
+            value={formatCurrency(report.total_balances, currency, context)}
+            icon={DollarSign}
+            color="#3B82F6"
+            trend="up"
+            trendValue="+12.5%"
+          />
+          <StatCard
+            title="Total Prêts"
+            value={formatCurrency(report.loans.total_loan_amount, currency, context)}
+            icon={CreditCard}
+            color="#8B5CF6"
+            trend="down"
+            trendValue="-2.3%"
+          />
+          <StatCard
+            title="Total Dépôts"
+            value={formatCurrency(report.deposits.total_deposit_amount, currency, context)}
+            icon={CashIcon}
+            color="#10B981"
+            trend="up"
+            trendValue="+8.7%"
+          />
+          <StatCard
+            title="Intérêts Générés"
+            value={formatCurrency(report.loans.total_interest + report.deposits.total_interestDeposit, currency, context)}
+            icon={TrendingUp}
+            color="#F59E0B"
+            trend="up"
+            trendValue="+15.2%"
+          />
+        </div>
+
+        {/* Account Balances by Type */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <SectionCard title="Répartition par Type de Client" icon={Users} color="#3B82F6">
+            <div className="space-y-4">
+              {report.total_balances_by_type.map((balance, index) => {
+                const percentage = (balance.total_balance / report.total_balances * 100).toFixed(1);
+                return (
+                  <div key={index} className="relative">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium text-gray-700">{balance.client_type}</span>
+                      <span className="text-sm text-gray-500">{percentage}%</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="w-full bg-gray-200 rounded-full h-3 mr-4">
+                        <div
+                          className="h-3 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
+                          style={{ width: `${percentage}%` }}
+                        ></div>
+                      </div>
+                      <span className="font-bold text-blue-600 whitespace-nowrap">
+                        {formatCurrency(balance.total_balance, currency, context)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Analyse des Performances" icon={BarChart3} color="#10B981">
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-green-700 font-medium">Rendement des Dépôts</p>
+                    <p className="text-2xl font-bold text-green-800">
+                      {((report.deposits.total_interestDeposit / report.deposits.total_deposit_amount) * 100).toFixed(2)}%
+                    </p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-green-600" />
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-r from-purple-50 to-violet-50 p-4 rounded-lg border border-purple-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-purple-700 font-medium">Taux Moyen Prêts</p>
+                    <p className="text-2xl font-bold text-purple-800">
+                      {((report.loans.total_interest / report.loans.total_loan_amount) * 100).toFixed(2)}%
+                    </p>
+                  </div>
+                  <CreditCard className="w-8 h-8 text-purple-600" />
+                </div>
+              </div>
+            </div>
+          </SectionCard>
+        </div>
+
+        {/* Loans and Deposits Details */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SectionCard title="Détail des Prêts" icon={CreditCard} color="#8B5CF6">
+            <div className="space-y-4">
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <p className="text-sm text-purple-700">Montant Total</p>
+                    <p className="text-lg font-bold text-purple-900">
+                      {formatCurrency(report.loans.total_loan_amount, currency, context)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-purple-700">Intérêts Totaux</p>
+                    <p className="text-lg font-bold text-purple-900">
+                      {formatCurrency(report.loans.total_interest, currency, context)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {report.loans.loans.map((loan, index) => (
+                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">{loan.account}</p>
+                      <p className="text-sm text-gray-600">Taux: {loan.interest_rate}%</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-900">{formatCurrency(loan.amount, currency, context)}</p>
+                      <p className="text-sm text-purple-600">+{formatCurrency(loan.interest, currency, context)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Détail des Dépôts" icon={CashIcon} color="#10B981">
+            <div className="space-y-4">
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <p className="text-sm text-green-700">Montant Total</p>
+                    <p className="text-lg font-bold text-green-900">
+                      {formatCurrency(report.deposits.total_deposit_amount, currency, context)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-green-700">Intérêts Totaux</p>
+                    <p className="text-lg font-bold text-green-900">
+                      {formatCurrency(report.deposits.total_interestDeposit, currency, context)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {report.deposits.deposits.map((deposit, index) => (
+                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">{deposit.account}</p>
+                      <p className="text-sm text-gray-600">Taux: {deposit.interest_rate}%</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-900">{formatCurrency(deposit.amount, currency, context)}</p>
+                      <p className="text-sm text-green-600">+{formatCurrency(deposit.interest, currency, context)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </SectionCard>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-sm text-gray-500 bg-white rounded-lg p-4 shadow-sm">
+          <p>Dashboard généré automatiquement • Dernière mise à jour: {new Date().toLocaleString('fr-FR')}</p>
+        </div>
+      </div>
     </div>
   );
 };

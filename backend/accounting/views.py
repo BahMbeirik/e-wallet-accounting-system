@@ -763,6 +763,22 @@ def financial_report(request):
         total_balance=Sum('balance')
     )
 
+    # Group accounts by client_type
+    accounts_by_type = defaultdict(list)
+    for acc in accounts:
+        accounts_by_type[acc.client_type].append({
+            'account': acc.name,
+            'balance': float(acc.balance),
+        })
+
+    accounts_by_type_list = [
+        {
+            'client_type': client_type,
+            'accounts': accs
+        }
+        for client_type, accs in accounts_by_type.items()
+    ]
+
     # Construct report
     report = {
         'accounts': [
@@ -780,6 +796,7 @@ def financial_report(request):
                 'total_balance': float(balance['total_balance'])
             } for balance in total_balances_by_type
         ],
+        'repartition_by_type': accounts_by_type_list,
         
         'loans': {
             'total_loan_amount': float(total_loan_amount),
