@@ -339,7 +339,7 @@ const FinancialReport = () => {
             icon={DollarSign}
             color="#3B82F6"
             trend="up"
-            trendValue="+12.5%"
+            trendValue={formatCurrency(report.loans.total_interest + report.deposits.total_interestDeposit, currency, context)}
           />
           <StatCard
             title="Total Prêts"
@@ -347,7 +347,7 @@ const FinancialReport = () => {
             icon={CreditCard}
             color="#8B5CF6"
             trend="down"
-            trendValue="-2.3%"
+            trendValue={formatCurrency(report.loans.total_interest, currency, context)}
           />
           <StatCard
             title="Total Dépôts"
@@ -355,7 +355,7 @@ const FinancialReport = () => {
             icon={CashIcon}
             color="#10B981"
             trend="up"
-            trendValue="+8.7%"
+            trendValue={formatCurrency(report.deposits.total_interestDeposit, currency, context)}
           />
           <StatCard
             title="Intérêts Générés"
@@ -363,7 +363,11 @@ const FinancialReport = () => {
             icon={TrendingUp}
             color="#F59E0B"
             trend="up"
-            trendValue="+15.2%"
+            trendValue={formatCurrency(
+              report.deposits.deposits[report.deposits.deposits.length - 1]?.interest || 0, 
+              currency, 
+              context
+            )}
           />
         </div>
 
