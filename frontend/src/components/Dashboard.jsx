@@ -8,6 +8,14 @@ import {formatCurrency } from '../utils/formatters'
 import { useCurrency } from '../contexts/CurrencyContext';
 import CombinedChartComponent from '../components/Chart'
 import { useNavigate } from 'react-router-dom';
+import { 
+  Smartphone, 
+  Users, 
+  ArrowLeftRight, 
+  Banknote, 
+} from "lucide-react";
+import {  CashIcon } from '@heroicons/react/outline';
+import { useAuth } from '../contexts/AuthContext';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -16,6 +24,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const { currency, convertCurrency, ...context  } = useCurrency();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isStaff = user?.is_staff || false;
   
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -154,10 +164,63 @@ const Dashboard = () => {
                   }
                 }
   }
+
+  const StatCard = ({ title, value, icon: Icon, color}) => (
+    <div className="bg-white rounded-xl shadow-lg p-3 border-2" style={{ borderColor: color }}>
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+          <p className="text-1xl font-bold text-gray-900 mb-1">{value}</p>
+          
+        </div>
+        <div className="flex-shrink-0">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: `${color}20` }}>
+            <Icon className="w-6 h-6" style={{ color }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
   
 
   return (
     <div className="bg-gray-50 w-screen md:w-full md:p-2.5 font-sans p-2">
+      {/*Total */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            { isStaff && (
+              <StatCard
+                title="Total Applications"
+                value={dashboardData.total_banking_apps || 0}
+                icon={Smartphone} 
+                color="#3B82F6"
+              />
+            )}
+              <StatCard
+                title="Total Comptes"
+                value={dashboardData.total_accounts || 0}
+                icon={Users} 
+                color="#8B5CF6"
+              />
+              <StatCard
+                title="Total Transactions"
+                value={dashboardData.total_transactions || 0}
+                icon={ArrowLeftRight} 
+                color="#ACA5EB"
+              />
+              <StatCard
+                title="Total Loans"
+                value={dashboardData.total_loans || 0}
+                icon={Banknote} 
+                color="#10B981"
+              />
+              <StatCard
+                title="Total Dépôts"
+                value={dashboardData.total_deposits || 0}
+                icon={CashIcon} 
+                color="#F59E0B"
+              />
+            </div>
+            
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Type de transaction Section  */}
         <div className="bg-white rounded-lg shadow-md p-4 h-full">

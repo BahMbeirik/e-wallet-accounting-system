@@ -937,8 +937,28 @@ def dashboard_data(request):
     account_balances_by_type = Account.objects.values('client_type').filter(banking_app__in=banking_app).annotate(total_balance=Sum('balance'))
 
     top_account = Account.objects.all().filter(banking_app__in=banking_app).order_by('-balance')[:5]
+
+    
+    # is staff user
+    if user.is_staff:
+        total_banking_apps = BankingApp.objects.count()
+
+    total_accounts = Account.objects.all().filter(banking_app__in=banking_app).count()
+    
+    total_transactions = Transaction.objects.all().filter(banking_app__in=banking_app).count()
+  
+    total_loans = Loan.objects.all().filter(banking_app__in=banking_app).count()
+    
+    total_deposits = Deposit.objects.all().filter(banking_app__in=banking_app).count()
+
     # إعداد البيانات للـ Dashboard
     data = {
+        'total_banking_apps': total_banking_apps if user.is_staff else None,
+        'total_accounts': total_accounts,
+        'total_transactions': total_transactions,
+        'total_loans': total_loans,
+        'total_deposits': total_deposits,
+        
         'transactions': {
             'total_Envoi': float(total_Envoi),
             'total_Paiement': float(total_Paiement),
