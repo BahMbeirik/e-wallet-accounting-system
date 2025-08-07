@@ -38,7 +38,7 @@ urlpatterns = [
     path('grand-livre/<int:account_id>/', GrandLivreAPIView.as_view(), name='grand-livre'),
     path('grand-livre/all/', GrandLivreAllAccountsAPIView.as_view(), name='grand-livre-all'),
 
-     path('auth/google/url/', GoogleLoginUrl.as_view(), name='google_login_url'),
+    path('auth/google/url/', GoogleLoginUrl.as_view(), name='google_login_url'),
     path('auth/google/callback/', GoogleCallback.as_view(), name='google_callback'),
     path('auth/user/', UserStatusView.as_view(), name='user_status'),
     path('auth/cleanup-tokens/', CleanupSocialTokens.as_view(), name='cleanup_tokens'),

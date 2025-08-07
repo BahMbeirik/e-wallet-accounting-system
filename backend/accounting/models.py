@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from datetime import date
 from django.utils import timezone
-
+from django.conf import settings
 from django.forms import ValidationError
 
 # Create your models here.
@@ -32,11 +32,12 @@ class BankingApp(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     created_by = models.ForeignKey(
-        'CustomUser',  
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='banking_apps',  
         verbose_name="Created by"
     )
+    
     
     class Meta:
         verbose_name = 'Banking Application'

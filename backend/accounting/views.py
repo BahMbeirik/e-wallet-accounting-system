@@ -14,7 +14,8 @@ from rest_framework.permissions import AllowAny
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
-from django.db.models import Sum
+from django.db.models import Count, Sum  ,DecimalField
+from django.db.models.functions import Coalesce
 from datetime import datetime
 from django.utils import timezone
 from rest_framework import generics
@@ -926,7 +927,6 @@ def dashboard_data(request):
     total_Paiement_Facture = Paiement_Facture_transactions.aggregate(Sum('montant'))['montant__sum'] or Decimal(0)
 
 
-
     # حساب 3 أكبر قروض
     top_loans = Loan.objects.all().filter(banking_app__in=banking_app).order_by('-amount')[:3]
 
@@ -938,11 +938,49 @@ def dashboard_data(request):
 
     top_account = Account.objects.all().filter(banking_app__in=banking_app).order_by('-balance')[:5]
 
+    # Initialiser les variables pour tous les utilisateurs
+    total_banking_apps = None
+    top_banks_data = {
+        'by_accounts': [],
+        'by_transactions': [],
+        'by_loans': [],
+        'by_deposits': []
+    }
     
     # is staff user
     if user.is_staff:
         total_banking_apps = BankingApp.objects.count()
 
+        # Remplir les données top banks directement dans le dictionnaire
+        top_banks_data['by_accounts'] = [
+            {'name': bank.name, 'account_count': bank.account_count}
+            for bank in BankingApp.objects.annotate(
+                account_count=Count('accounts')
+            ).order_by('-account_count')[:3]
+        ]
+        
+        top_banks_data['by_transactions'] = [
+            {'name': bank.name, 'transaction_count': bank.transaction_count}
+            for bank in BankingApp.objects.annotate(
+                transaction_count=Count('transactions')
+            ).order_by('-transaction_count')[:3]
+        ]
+        
+        top_banks_data['by_loans'] = [
+            {'name': bank.name, 'loan_amount': float(bank.loan_amount or 0)}
+            for bank in BankingApp.objects.annotate(
+                loan_amount=Coalesce(Sum('loans__amount'), 0, output_field=DecimalField(max_digits=15, decimal_places=2))
+            ).order_by('-loan_amount')[:3]
+        ]
+        
+        top_banks_data['by_deposits'] = [
+            {'name': bank.name, 'deposit_amount': float(bank.deposit_amount or 0)}
+            for bank in BankingApp.objects.annotate(
+                deposit_amount=Coalesce(Sum('deposits__amount'), 0, output_field=DecimalField(max_digits=15, decimal_places=2))
+            ).order_by('-deposit_amount')[:3]
+        ]
+        
+    
     total_accounts = Account.objects.all().filter(banking_app__in=banking_app).count()
     
     total_transactions = Transaction.objects.all().filter(banking_app__in=banking_app).count()
@@ -953,7 +991,8 @@ def dashboard_data(request):
 
     # إعداد البيانات للـ Dashboard
     data = {
-        'total_banking_apps': total_banking_apps if user.is_staff else None,
+        'top_banks': top_banks_data,
+        'total_banking_apps': total_banking_apps,
         'total_accounts': total_accounts,
         'total_transactions': total_transactions,
         'total_loans': total_loans,

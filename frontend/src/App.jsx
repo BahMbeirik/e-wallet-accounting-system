@@ -85,7 +85,7 @@ function App() {
                   {/* Content Wrapper*/}
                   <main className="p-1 md:p-1 lg:p-1 flex-1 bg-gray-50 overflow-y-auto">
                     <Routes >
-                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/dashboard" element={<Dashboard isSidebarExpanded={isSidebarExpanded}/>} />
                       <Route path="/accounts" element={<AccountsPage />} />
                       <Route path="/transactions" element={
                         <TransactionsPage />

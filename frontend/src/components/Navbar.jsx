@@ -87,20 +87,24 @@ const Navbar = () => {
               <div className="flex items-center space-x-4">
 
                 {/* Navigation Links */}
+                {!isStaff && (
                 <NavLink to="/banking-apps" className="font-bold text-indigo-800">
                   Applications
                 </NavLink>
+                )}
 
                 {/* Currency Selector */}
-                <select 
-                  value={currency} 
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="px-2 py-1 text-sm bg-indigo-100 text-indigo-800 rounded-lg hover:bg-indigo-200 transition-colors"
-                >
+                {!isStaff && (
+                  <select 
+                    value={currency} 
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="px-2 py-1 text-sm bg-indigo-100 text-indigo-800 rounded-lg hover:bg-indigo-200 transition-colors"
+                  >
                   <option value="USD">USD ($)</option>
                   <option value="MRU">MRU (UM)</option>
                   <option value="EUR">EUR (€)</option>
                 </select>
+                )}
                 
                 <NavLink  to="profile" className="flex items-center space-x-3 text-gray-700 hover:text-indigo-600 transition-all duration-200 group">
                   {user?.first_name || user?.last_name ? (
@@ -198,63 +202,79 @@ const Navbar = () => {
                               </NavLink>
                             </li>
                             )}
-                            <li >
-                              <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/banking-apps">
+                            <NavLink to="/banking-apps" onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0'>
                                 <span className="ms-3 text-gray-700 ">Applications</span>
-                              </NavLink>
-                            </li>
+                            </NavLink>
+
+                            {!isStaff && (
                             <li >
                               <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/accounts">
                                 <span className="ms-3 text-gray-700 ">Comptes</span>
                               </NavLink>
                             </li>
+                            )}
+                            {!isStaff && (
                             <li >
                               <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/transactions">
                                 <span className="ms-3 text-gray-700 ">Transactions</span>
                               </NavLink>
                             </li>
+                            )} 
+                            {!isStaff && (                 
                             <li >
                               <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/journal">
                                 <span className="ms-3 text-gray-700 ">Le Journal</span>
                               </NavLink>
                             </li>
+                            )}
+                            {!isStaff && (
                             <li >
                               <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/grand-livre">
                                 <span className="ms-3 text-gray-700 ">Grand Livre</span>
                               </NavLink>
                             </li>
+                            )}
+                            {!isStaff && (
                             <li >
                               <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/transaction-reports">
                                 <span className="ms-3 text-gray-700 ">Historique des transactions</span>
                               </NavLink>
                             </li>
-                          
+                            )}
+                            {!isStaff && (
                             <li >
                               <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/loans-deposits">
                                 <span className="ms-3 text-gray-700 ">Prêts</span>
                               </NavLink>
                             </li>
+                            )}
+                            {!isStaff && (  
                             <li >
                               <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/deposits">
                                 <span className="ms-3 text-gray-700 ">Dépôts</span>
                               </NavLink>
                             </li>
+                            )}
+                            {!isStaff && (
                             <li >
                               <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/reports">
                                 <span className="ms-3 text-gray-700 ">Rapports Financiers</span>
                               </NavLink>
                             </li>
+                            )}
                             <li >
                               <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/currency-converter">
                                 <span className="ms-3 text-gray-700 ">Convertisseur</span>
                               </NavLink>
                             </li>
+                            {!isStaff && (
                           
                             <li >
                               <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/interest-calculator">
                                 <span className="ms-3 text-gray-700 ">Calculateur d'intérêts</span>
                               </NavLink>
                             </li>
+                            )}
                             <li >
                               <NavLink onClick={() => setIsMobileMenuOpen(false)} className='nav-link align-middle px-0' to="/profile">
                                 <span className="ms-3 text-gray-700 ">Profile</span>
