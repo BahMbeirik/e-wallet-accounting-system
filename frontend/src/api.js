@@ -14,7 +14,10 @@ axiosInstance.interceptors.request.use(config => {
         }
     }
 
-    config.headers['Content-Type'] = 'application/json';
+    // إذا كان data عبارة عن FormData لا تغيّر Content-Type
+    if (!(config.data instanceof FormData)) {
+        config.headers['Content-Type'] = 'application/json';
+    }
     return config;
 }, error => {
     return Promise.reject(error);
