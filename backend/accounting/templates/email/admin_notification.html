@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nouvelle demande de contact</title>
+</head>
+<body>
+    <h2>Nouvelle demande de contact</h2>
+    
+    <p><strong>Nom:</strong> {{ contact.first_name }} {{ contact.last_name }}</p>
+    <p><strong>Entreprise:</strong> {{ contact.company }}</p>
+    <p><strong>Email:</strong> {{ contact.email }}</p>
+    <p><strong>Téléphone:</strong> {{ contact.phone|default:"Non fourni" }}</p>
+    <p><strong>Effectif:</strong> {{ contact.get_employees_display|default:"Non spécifié" }}</p>
+    
+    <h3>Message:</h3>
+    <p>{{ contact.message }}</p>
+    
+    <p><em>Date de soumission: {{ contact.submitted_at }}</em></p>
+</body>
+</html>

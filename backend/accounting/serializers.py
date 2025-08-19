@@ -1,6 +1,6 @@
 from django.utils import timezone
 from rest_framework import serializers
-from .models import Account, BankingApp, Deposit, Loan, Transaction ,JournalEntry
+from .models import Account, BankingApp, Deposit, Loan, Transaction ,JournalEntry,ContactRequest
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import make_password
@@ -174,6 +174,46 @@ class JournalEntrySerializer(serializers.ModelSerializer):
             )
             
         return data
+
+class ContactRequestSerializer(serializers.ModelSerializer):
+    employees_display = serializers.CharField(
+        source='get_employees_display', 
+        read_only=True,
+        required=False
+    )
+    
+    class Meta:
+        model = ContactRequest
+        fields = [
+            'id',
+            'first_name',
+            'last_name',
+            'email',
+            'company',
+            'phone',
+            'employees',
+            'employees_display',
+            'message',
+            'consent',
+            'submitted_at',
+            'is_processed',
+            'processed_at'
+        ]
+        extra_kwargs = {
+            'consent': {'required': True},
+            'is_processed': {'read_only': True},
+            'processed_at': {'read_only': True},
+            'submitted_at': {'read_only': True},
+        }
+
+    def validate_consent(self, value):
+        if not value:
+            raise serializers.ValidationError("Vous devez accepter notre politique de confidentialité.")
+        return value
+
+
+
+
 
 # Admin 
 

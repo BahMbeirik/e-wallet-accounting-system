@@ -35,6 +35,7 @@ import UserManagement from './components/admin/UserManagement';
 import Profile from './pages/Profile';
 import DocumentationPage from './pages/DocumentationPage';
 import BankingAppList from './pages/BankingAppList';  
+import ContactPage from './pages/contactPage';
 
 function App() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -56,6 +57,7 @@ function App() {
           <Route path="/" element={<BankingLandingPage />} />
           <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route path="/documentation" element={<DocumentationPage />} />
+          <Route path="/contact-sales" element={<ContactPage />} />
           {/* صفحات مع sidebar و navbar */}
           <Route
             path="/*"

@@ -5,9 +5,11 @@ from django.http import JsonResponse
 from collections import defaultdict
 from rest_framework import viewsets
 from rest_framework.response import Response
-from .models import Account, Deposit, Loan, Transaction, JournalEntry
-from .serializers import AccountSerializer, ChangePasswordSerializer, DepositSerializer, ExternalAccountSerializer, ExternalTransactionSerializer, LoanSerializer, TransactionSerializer ,JournalEntrySerializer,LoginSerializer, RegisterSerializer, UserProfileSerializer
+from .models import Account, Deposit, Loan, Transaction, JournalEntry,ContactRequest
+from .serializers import AccountSerializer, ChangePasswordSerializer, DepositSerializer, ExternalAccountSerializer, ExternalTransactionSerializer, LoanSerializer, TransactionSerializer ,JournalEntrySerializer,LoginSerializer, RegisterSerializer, UserProfileSerializer,ContactRequestSerializer
 import requests 
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
@@ -561,6 +563,73 @@ class BankingAppViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # ربط التطبيق بالمستخدم الحالي تلقائيًا
         serializer.save(created_by=self.request.user)
+
+class ContactRequestCreateView(generics.CreateAPIView):
+    queryset = ContactRequest.objects.all()
+    serializer_class = ContactRequestSerializer
+    permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        contact_request = serializer.save()
+        try:
+            self.send_confirmation_email(contact_request)
+            self.send_admin_notification(contact_request)
+        except Exception as e:
+            logger.error(f"Failed to send email: {str(e)}")
+            # Continue even if email fails
+
+    def send_confirmation_email(self, contact_request):
+        subject = "Confirmation de votre demande de contact"
+        recipient = contact_request.email
+        
+        context = {
+            'first_name': contact_request.first_name,
+            'last_name': contact_request.last_name,
+            'company': contact_request.company,
+        }
+        
+        message = render_to_string('email/contact_confirmation.txt', context)
+        html_message = render_to_string('email/contact_confirmation.html', context)
+        
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [recipient],
+            html_message=html_message,
+            fail_silently=False
+        )
+
+    def send_admin_notification(self, contact_request):
+        subject = f"Nouvelle demande de contact de {contact_request.company}"
+        recipients = [admin[1] for admin in settings.ADMINS]
+        
+        context = {
+            'contact': contact_request,
+        }
+        
+        message = render_to_string('email/admin_notification.txt', context)
+        html_message = render_to_string('email/admin_notification.html', context)
+        
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            recipients,
+            html_message=html_message,
+            fail_silently=False
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            {"detail": "Votre demande a été envoyée avec succès."},
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
 
 
 class ReceiveExternalData(APIView):

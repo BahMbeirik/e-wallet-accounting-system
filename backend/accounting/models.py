@@ -279,3 +279,37 @@ class JournalEntry(models.Model):
 
         super().save(*args, **kwargs)
 
+class ContactRequest(models.Model):
+    EMPLOYEES_CHOICES = [
+        ('1-10', '1-10 employés'),
+        ('11-50', '11-50 employés'),
+        ('51-200', '51-200 employés'),
+        ('201-1000', '201-1000 employés'),
+        ('1000+', '1000+ employés'),
+    ]
+
+    first_name = models.CharField(max_length=100, verbose_name="Prénom")
+    last_name = models.CharField(max_length=100, verbose_name="Nom")
+    email = models.EmailField(verbose_name="Email professionnel")
+    company = models.CharField(max_length=200, verbose_name="Entreprise")
+    phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Téléphone")
+    employees = models.CharField(
+        max_length=20, 
+        choices=EMPLOYEES_CHOICES, 
+        blank=True, 
+        null=True,
+        verbose_name="Effectif"
+    )
+    message = models.TextField(verbose_name="Message")
+    consent = models.BooleanField(default=False, verbose_name="Consentement RGPD")
+    submitted_at = models.DateTimeField(default=timezone.now, verbose_name="Date de soumission")
+    is_processed = models.BooleanField(default=False, verbose_name="Demande traitée")
+    processed_at = models.DateTimeField(blank=True, null=True, verbose_name="Date de traitement")
+
+    class Meta:
+        verbose_name = "Demande de contact commercial"
+        verbose_name_plural = "Demandes de contact commercial"
+        ordering = ['-submitted_at']
+
+    def __str__(self):
+        return f"Demande de {self.first_name} {self.last_name} ({self.company})"

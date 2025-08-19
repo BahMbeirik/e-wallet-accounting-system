@@ -1,0 +1,12 @@
+Nouvelle demande de contact:
+
+Nom: {{ contact.first_name }} {{ contact.last_name }}
+Entreprise: {{ contact.company }}
+Email: {{ contact.email }}
+Téléphone: {{ contact.phone|default:"Non fourni" }}
+Effectif: {{ contact.get_employees_display|default:"Non spécifié" }}
+
+Message:
+{{ contact.message }}
+
+Date de soumission: {{ contact.submitted_at }}

@@ -185,9 +185,11 @@ const BankingLandingPage = () => {
             <a onClick={isLoggedin} > <button className="px-8 py-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">
               Commencer votre essai gratuit
             </button></a>
+            <NavLink to="/contact-sales">
             <button className="px-8 py-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-white transition-colors">
               Contacter l'équipe commerciale
             </button>
+          </NavLink>
           </div>
         </div>
       </section>

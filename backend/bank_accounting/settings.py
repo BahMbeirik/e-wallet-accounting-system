@@ -42,6 +42,12 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'bahah008@gmail.com'
 EMAIL_HOST_PASSWORD = 'hdak oerj yfni oltv'
+DEFAULT_FROM_EMAIL = 'bahah008@gmail.com'
+
+# Admins who will receive notifications
+ADMINS = [
+    ('Bahah', 'bahahembeirik@gmail.com'),
+]
 
 # DJANGO_REST_AUTH = {
 #     'PASSWORD_RESET_USE_SITES_DOMAIN': True,

@@ -5,7 +5,7 @@ from .views import (
     RegisterView, LoginView, UpdateProfileView, UserStatusView, ValidateResetTokenView, import_accounts_csv, import_transactions_csv, transaction_report, financial_report,
     calculate_loan_interest, calculate_deposit_interest, convert_currency,
     dashboard_data, JournalEntryListCreate, JournalEntryDetail, import_csv,
-    GrandLivreAPIView, GrandLivreAllAccountsAPIView,GroupViewSet, PermissionViewSet, UserViewSet
+    GrandLivreAPIView, GrandLivreAllAccountsAPIView,GroupViewSet, PermissionViewSet, UserViewSet,ContactRequestCreateView
 )
 
 router = DefaultRouter()
@@ -37,7 +37,7 @@ urlpatterns = [
     path('import-accounts-csv/', import_accounts_csv, name='import_accounts_csv'),
     path('grand-livre/<int:account_id>/', GrandLivreAPIView.as_view(), name='grand-livre'),
     path('grand-livre/all/', GrandLivreAllAccountsAPIView.as_view(), name='grand-livre-all'),
-
+    path('contact-sales/', ContactRequestCreateView.as_view(), name='contact-sales'),
     path('auth/google/url/', GoogleLoginUrl.as_view(), name='google_login_url'),
     path('auth/google/callback/', GoogleCallback.as_view(), name='google_callback'),
     path('auth/user/', UserStatusView.as_view(), name='user_status'),
