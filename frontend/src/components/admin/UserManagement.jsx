@@ -33,6 +33,10 @@ const UserRow = ({ user, onGroupChange , onRoleChange, onStatusChange }) => {
   const [isActive, setIsActive] = useState(false);
 
   const handleRoleToggle = async () => {
+    // منع التغيير إذا كان المستخدم staff + superuser
+    if (user.is_staff && user.is_superuser) {
+      return;
+    }
     setIsRoleUpdating(true);
     try {
       await onRoleChange(user.id, !user.is_staff);
@@ -130,14 +134,14 @@ const UserRow = ({ user, onGroupChange , onRoleChange, onStatusChange }) => {
         <div className="flex items-center space-x-2">
           <button
             onClick={handleRoleToggle}
-            disabled={isRoleUpdating}
+            disabled={isRoleUpdating || (user.is_staff && user.is_superuser)}
             className={`
               inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 transform
               ${user.is_staff 
                 ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-105 ring-2 ring-blue-200' 
                 : 'bg-gray-100 text-gray-700 hover:bg-gradient-to-r hover:from-gray-200 hover:to-gray-300 hover:scale-105'
               }
-              ${isRoleUpdating ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md cursor-pointer'}
+              ${(isRoleUpdating || user.is_superuser) ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md cursor-pointer'}
               focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50
             `}
           >
@@ -147,6 +151,7 @@ const UserRow = ({ user, onGroupChange , onRoleChange, onStatusChange }) => {
               <Shield className="w-3 h-3 mr-1" />
             )}
             {user.is_staff ? 'Admin' : 'User'}
+            {user.is_superuser && ' (Super)'}
           </button>
         </div>
       </td>
@@ -155,14 +160,16 @@ const UserRow = ({ user, onGroupChange , onRoleChange, onStatusChange }) => {
         <div className="flex items-center space-x-2">
           <button
             onClick={handleActiveToggle}
-            disabled={isActive}
+            disabled={isActive || (user.is_staff && user.is_superuser)}
             className={`
               inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 transform
               ${user.is_active
                 ? 'bg-gradient-to-r from-green-300 to-green-600 text-white shadow-lg scale-105 ring-2 ring-blue-200'
                 : 'bg-red-100 text-gray-700 hover:bg-gradient-to-r hover:from-red-200 hover:to-red-300 hover:scale-105'
               }
-              ${isActive ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md cursor-pointer'}
+              ${(isActive || (user.is_staff && user.is_superuser)) 
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'hover:shadow-md cursor-pointer'}
               focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50
             `}
           >
@@ -173,6 +180,7 @@ const UserRow = ({ user, onGroupChange , onRoleChange, onStatusChange }) => {
             )}
             {user.is_active ? 'Active' : 'Inactive'}
           </button>
+
         </div>
       </td>
 
@@ -189,6 +197,10 @@ const UserCard = ({ user, onGroupChange ,onRoleChange,onStatusChange}) => {
 
 
   const handleRoleToggle = async () => {
+    // منع التغيير إذا كان المستخدم staff + superuser
+    if (user.is_staff && user.is_superuser) {
+      return;
+    }
     setIsRoleUpdating(true);
     try {
       await onRoleChange(user.id, !user.is_staff);
@@ -236,21 +248,27 @@ const UserCard = ({ user, onGroupChange ,onRoleChange,onStatusChange}) => {
             <span className="font-semibold text-gray-900 truncate ">{user.username || 'Nom non défini'}</span>
             <button
               onClick={handleRoleToggle}
-              disabled={isRoleUpdating}
+              disabled={isRoleUpdating || (user.is_staff && user.is_superuser)}
               className={`
-                px-3 py-1 rounded-lg text-xs font-semibold transition-all
+                inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 transform
                 ${user.is_staff 
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white' 
-                  : 'bg-gray-200 text-gray-700'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-105 ring-2 ring-blue-200' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gradient-to-r hover:from-gray-200 hover:to-gray-300 hover:scale-105'
                 }
-                ${isRoleUpdating ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md cursor-pointer'}
+                ${(isRoleUpdating || (user.is_staff && user.is_superuser)) 
+                  ? 'opacity-50 cursor-not-allowed' 
+                  : 'hover:shadow-md cursor-pointer'}
+                focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50
               `}
             >
               {isRoleUpdating ? (
-                <Loader className="w-3 h-3 animate-spin mr-1 inline" />
-              ) : null}
+                <Loader className="w-3 h-3 animate-spin mr-1" />
+              ) : (
+                <Shield className="w-3 h-3 mr-1" />
+              )}
               {user.is_staff ? 'Admin' : 'User'}
             </button>
+
 
           </div>
 
@@ -323,25 +341,25 @@ const UserCard = ({ user, onGroupChange ,onRoleChange,onStatusChange}) => {
       {/*Active section*/}
       <div className="flex items-center space-x-2 mt-1 justify-end">
           <button
-            onClick={handleActiveToggle}
-            disabled={isActive}
-            className={`
-              inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 transform
-              ${user.is_active
-                ? ' text-green-600 '
-                : ' text-red-700 '
-              }
-              ${isActive ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md cursor-pointer'}
-              focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50
-            `}
-          >
-            {isActive ? (
-              <Loader className="w-3 h-3 animate-spin mr-1" />
-            ) : (
-              <Check className="w-3 h-3 mr-1" />
-            )}
-            {user.is_active ? 'Active' : 'Inactive'}
-          </button>
+  onClick={handleActiveToggle}
+  disabled={isActive || (user.is_staff && user.is_superuser)}
+  className={`
+    inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 transform
+    ${user.is_active ? 'text-green-600' : 'text-red-700'}
+    ${(isActive || (user.is_staff && user.is_superuser)) 
+      ? 'opacity-50 cursor-not-allowed' 
+      : 'hover:shadow-md cursor-pointer'}
+    focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50
+  `}
+>
+  {isActive ? (
+    <Loader className="w-3 h-3 animate-spin mr-1" />
+  ) : (
+    <Check className="w-3 h-3 mr-1" />
+  )}
+  {user.is_active ? 'Active' : 'Inactive'}
+</button>
+
         </div>
     </div>
   );
