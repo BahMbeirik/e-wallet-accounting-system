@@ -279,7 +279,7 @@ export default function DocumentationPage() {
                     </h3>
                     <div className="bg-white rounded-lg p-4 border border-green-200">
                       <code className="text-green-700 font-mono">
-                        POST /external/nom_application/
+                        POST https://bahah.pythonanywhere.com/api/external/nom_application/
                       </code>
                     </div>
                   </div>
